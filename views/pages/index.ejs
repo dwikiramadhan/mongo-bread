@@ -82,12 +82,22 @@
       <tbody></tbody>
     </table>
     <ul class="pagination"></ul>
+    <a href="/add" class="btn btn-primary">Add</a>
   </div>
   <script>
     const API_URL = "http://localhost:3000/api/index";
 
     $(document).ready(function () {
       listData(1);
+
+      //delete record
+      $("table tbody").on("click", "#delete-btn", function () {
+        console.log($(this).attr("data-id"));
+        if (confirm("Are you sure ?")) {
+          deleteData($(this).attr("data-id"));
+        }
+        return false;
+      })
     })
 
     const listData = (page) => {
@@ -112,8 +122,8 @@
                         <td>${tanggal}</td>
                         <td>${d.boolean}</td>
                         <td>
-                            <button data-id = "${d.id}" type="button" id="edit-btn" class="btn btn-success">Edit</button>
-                            <button data-id = "${d.id}" type="button" id="delete-btn" class="btn btn-danger">Delete</button>
+                            <a href="edit/${d._id}" class="btn btn-success">Edit</a>
+                            <button data-id = "${d._id}" type="button" id="delete-btn" class="btn btn-danger">Delete</button>
                         </td>
                     </tr>`
         });
@@ -144,6 +154,17 @@
           listData(id);
         })
         //--------------------------------- End Pagination ---------------------------------------
+      }).fail(function (jqXHR, textStatus) {
+        alert("Request failed get data: " + textStatus);
+      })
+    }
+
+    const deleteData = (id) => {
+      $.ajax({
+        url: `${API_URL}/delete/${id}`,
+        method: 'DELETE',
+      }).done(function () {
+        window.location.href = "/";
       }).fail(function (jqXHR, textStatus) {
         alert("Request failed get data: " + textStatus);
       })

@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const mongo = require('../config/db.js');
+var ObjectId = require('mongodb').ObjectId;
 const url = require('url');
 
 var client;
@@ -21,7 +22,7 @@ module.exports = function (db) {
 
         let field = [];
         if (checked_id === "true" && id) {
-            var val = { 'id': Number(id) }
+            var val = { 'id': id }
             field.push(val);
         }
         if (checked_string === "true" && string) {
@@ -76,7 +77,6 @@ module.exports = function (db) {
                 .skip(0)
                 .toArray()
                 .then(result => {
-                    console.log(result.length)
                     res.json({
                         data: result,
                         current: page,
@@ -103,7 +103,7 @@ module.exports = function (db) {
 
         let field = [];
         if (checked_id === "true" && id) {
-            var val = { 'id': Number(id) }
+            var val = { 'id': id }
             field.push(val);
         }
         if (checked_string === "true" && string) {
@@ -157,7 +157,6 @@ module.exports = function (db) {
                 .skip((page - 1) * per_page)
                 .toArray()
                 .then(result => {
-                    console.log(result.length)
                     res.json({
                         data: result,
                         current: page,
@@ -170,6 +169,86 @@ module.exports = function (db) {
                 .catch(err => console.log(err));
         }
     });
+
+    router.post('/add', async (req, res) => {
+        var { string, date } = req.body;
+        const integer = Number(req.body.integer);
+        const float = Number(req.body.float);
+        const boolean = req.body.boolean;
+
+        let last_id = await client.db('data_type').collection('datatype')
+            .find({})
+            .sort({ _id: -1 })
+            .limit(1)
+            .toArray();
+        let idNew = last_id[0].id + 1;
+
+        await client.db('data_type').collection('datatype')
+            .insertOne({
+                id: idNew,
+                string: string,
+                integer: integer,
+                float: float,
+                date: date,
+                boolean: boolean
+            })
+            .then(result => {
+                res.send('Add data is Successfully!')
+            })
+            .catch(err => res.send(err));
+    });
+
+    router.delete('/delete/:id', async (req, res) => {
+        const { id } = req.params;
+        var o_id = new ObjectId(id)
+
+        console.log(o_id);
+
+        await client.db('data_type').collection('datatype')
+            .deleteMany({
+                _id: o_id
+            })
+            .then(result => {
+                res.send(`Delete data is Successfully! ${result}`)
+            })
+            .catch(err => res.send(err))
+    });
+
+    router.get('/edit/:id', async (req, res) => {
+        const { id } = req.params;
+        var o_id = new ObjectId(id)
+        await client.db('data_type').collection('datatype')
+            .findOne({
+                _id: o_id
+            })
+            .then(result => {
+                res.json(result)
+            })
+            .catch(err => res.send(err))
+    });
+
+    router.put('/edit/:id', async (req, res) => {
+        const { id } = req.params;
+        var o_id = new ObjectId(id)
+
+        var { string, date } = req.body;
+        const integer = Number(req.body.integer);
+        const float = Number(req.body.float);
+        const boolean = req.body.boolean;
+        console.log(o_id)
+        await client.db('data_type').collection('datatype')
+            .updateOne(
+                { _id: o_id },
+                {
+                    $set: req.body
+                }
+            )
+            .then(result => {
+                res.send('Data has been Update!' + result);
+            })
+            .catch(err => res.send(err))
+    })
+
     return router;
 }
 

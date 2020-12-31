@@ -1,0 +1,96 @@
+<%- include('../partials/head'); %>
+
+<body>
+    <script>
+        const API_URL = "http://localhost:3000/api/index";
+        var url_catch = $(location).attr('pathname');
+        var _id = url_catch.split('/')[2];
+
+        $.ajax({
+            url: `${API_URL}/edit/${_id}`,
+            method: 'GET',
+            dataType: 'JSON'
+        }).done(function (data) {
+            let html = `
+            <div class="container" style="margin-top: 30px;">
+                <h1>Edit Data</h1>
+                <form id='form-data'>
+                    <div class="form-group row">
+                        <label for="id" class="col-sm-2 col-form-label">ID</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="id" id="id" value="${data.id}" readonly>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="inputString" class="col-sm-2 col-form-label">String</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="string" id="string" value="${data.string}">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="inputInteger" class="col-sm-2 col-form-label">Integer</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" name="integer" id="integer" value="${data.integer}">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="inputFloat" class="col-sm-2 col-form-label">Float</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="float" id="float" value="${data.float}">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="inputDate" class="col-sm-2 col-form-label">Date</label>
+                        <div class="col-sm-8">
+                            <input type="date" class="form-control" name="date" id="date" value="${data.date}">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="selectBoolean" class="col-sm-2 col-form-label">Boolean</label>
+                        <div class="col-sm-8">
+                            <select class="form-control" name="boolean">
+                                <option>Choose the boolean ...</option>
+                                <option value="1" ${data.boolean == '1' ? 'selected' : ''} >True</option>
+                                <option value="0" ${data.boolean == '0' ? 'selected' : ''} >False</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <input type="submit" class="btn btn-primary" value="Save"/>
+                    </div>
+                </form>
+            </div>
+            `;
+            $('body').html(html);
+            $('#form-data').on('submit', (e) => {
+                e.preventDefault();
+                let id = $('#id');
+                let string = $('#string');
+                let integer = $('#integer');
+                let float = $('#float');
+                let date = $('#date');
+                let boolean = $('#boolean');
+
+                $.ajax({
+                    url: `${API_URL}/edit/${_id}`,
+                    method: 'PUT',
+                    data: {
+                        id: id.val(),
+                        string: string.val(),
+                        integer: integer.val(),
+                        float: float.val(),
+                        date: date.val(),
+                        boolean: boolean.val()
+                    }
+                }).done(function () {
+                    window.location.href = "/";
+                }).fail(function (jqXHR, textStatus) {
+                    alert("Request failed get data: " + textStatus);
+                })
+            });
+        }).fail(function (jqXHR, textStatus) {
+            alert("Request failed get data: " + textStatus);
+        });
+    </script>
+</body>
+<%- include('../partials/footer'); %>
