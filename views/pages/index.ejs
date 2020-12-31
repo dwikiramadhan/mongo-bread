@@ -1,0 +1,196 @@
+<%- include('../partials/head'); %>
+
+<body>
+  <div class="container" style="margin-top: 30px;">
+    <h1>BREAD (Browse, Read, Edit, Add, Delete)</h1>
+    <h4>Filters</h4>
+    <form action="/" method="GET">
+      <div class="form-group row">
+        <label for="inputPassword" class="col-sm-2 col-form-label">
+          <input type="checkbox" id="checked_id" name="checked_id" value="true"> ID
+        </label>
+        <div class="col-sm-8">
+          <input type="text" class="form-control" id="inputId" name="id" placeholder="ID">
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="inputString" class="col-sm-2 col-form-label">
+          <input type="checkbox" id="checked_string" name="checked_string" value="true"> String
+        </label>
+        <div class="col-sm-8">
+          <input type="text" class="form-control" id="inputString" name="string" placeholder="String">
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="inputInteger" class="col-sm-2 col-form-label">
+          <input type="checkbox" id="checked_integer" name="checked_integer" value="true"> Integer
+        </label>
+        <div class="col-sm-8">
+          <input type="text" class="form-control" id="inputInteger" name="integer" placeholder="Integer">
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="inputFloat" class="col-sm-2 col-form-label">
+          <input type="checkbox" id="checked_float" name="checked_float" value="true"> Float
+        </label>
+        <div class="col-sm-8">
+          <input type="text" class="form-control" id="inputFloat" name="float" placeholder="Float">
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="inputDate" class="col-sm-2 col-form-label">
+          <input type="checkbox" id="checked_date_from" name="checked_date" value="true"> Date
+        </label>
+        <div class="col-sm-3">
+          <input type="date" class="form-control" id="inputDate" name="start_date" placeholder="Start date">
+        </div>
+        <div class="col-sm-0">
+          <p>to</p>
+        </div>
+        <div class="col-sm-3">
+          <input type="date" class="form-control" id="inputDate" name="end_date" placeholder="End date">
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="selectBoolean" class="col-sm-2 col-form-label">
+          <input type="checkbox" id="checked_boolean" name="checked_boolean" value="true"> Boolean
+        </label>
+        <div class="col-sm-8">
+          <select class="form-control" name="boolean">
+            <option>Choose the boolean ...</option>
+            <option value="1">True</option>
+            <option value="0">False</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <p><input type="submit" class="btn btn-primary" value="Search" /></p>
+      </div>
+    </form>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">String</th>
+          <th scope="col">Integer</th>
+          <th scope="col">Float</th>
+          <th scope="col">Date</th>
+          <th scope="col">Boolean</th>
+          <th scope="col">Aksi</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <ul class="pagination"></ul>
+  </div>
+  <script>
+    const API_URL = "http://localhost:3000/api/index";
+
+    $(document).ready(function () {
+      listData(1);
+    })
+
+    const listData = (page) => {
+      var url_catch = $(location).attr('search');
+      $.ajax({
+        url: `${API_URL}/${page}/${url_catch}`,
+        type: 'get',
+        dataType: 'json'
+      }).done(function (data) {
+        var dataTrue = data.data;
+        let html = '';
+        dataTrue.forEach(d => {
+          var tgl = new Date(d.date);
+          var bulan_indo = bln_indo(tgl.getMonth());
+          var tgl_full = tgl.getDate() + ' ' + bulan_indo + ' ' + tgl.getFullYear();
+          let tanggal = d.date != "" ? tgl_full : "kosong";
+          html += `<tr>
+                        <th scope="row">${d.id}</th>
+                        <td>${d.string}</td>
+                        <td>${d.integer}</td>
+                        <td>${d.float}</td>
+                        <td>${tanggal}</td>
+                        <td>${d.boolean}</td>
+                        <td>
+                            <button data-id = "${d.id}" type="button" id="edit-btn" class="btn btn-success">Edit</button>
+                            <button data-id = "${d.id}" type="button" id="delete-btn" class="btn btn-danger">Delete</button>
+                        </td>
+                    </tr>`
+        });
+        $('table tbody').html(html)
+        //---------------------------------Pagination ---------------------------------------------
+        let pagePrevious = '';
+        if (data.current == 1) {
+          pagePrevious += `<li class="page-item" disabled><a class="page-link">Previous</a></li>`
+        } else {
+          pagePrevious += `<li class="page-item"><button data-id = "${data.previous_page}" type="button" id="page-btn" class="page-link">Previous</button></li> `
+        }
+        for (let i = 1; i <= data.pages; i++) {
+          if (i == data.current) {
+            pagePrevious += `<li class="page-item active"><button type="button" id="page-btn" class="page-link">${i}</button></li>`
+          } else {
+            pagePrevious += `<li class="page-item"><button data-id = "${i}" type="button" id="page-btn" class="page-link">${i}</button></li>`
+          }
+        }
+        if (data.current == data.pages) {
+          pagePrevious += `<li class="page-item" disabled><a class="page-link">Next</a></li>`
+        } else {
+          pagePrevious += `<li class="page-item"><button data-id = "${data.next_page}" type="button" id="page-btn" class="page-link">Next</button></li>`
+        }
+        $('.pagination').html(pagePrevious)
+        $("ul li").on("click", "#page-btn", function () {
+          const id = $(this).attr('data-id');
+          console.log(id)
+          listData(id);
+        })
+        //--------------------------------- End Pagination ---------------------------------------
+      }).fail(function (jqXHR, textStatus) {
+        alert("Request failed get data: " + textStatus);
+      })
+    }
+
+    function bln_indo(bln) {
+      var month = '';
+      switch (bln) {
+        case 0:
+          month = "Januari"
+          break;
+        case 1:
+          month = "Februari"
+          break;
+        case 2:
+          month = "Maret"
+          break;
+        case 3:
+          month = "April"
+          break;
+        case 4:
+          month = "Mei"
+          break;
+        case 5:
+          month = "Juni"
+          break;
+        case 6:
+          month = "Juli"
+          break;
+        case 7:
+          month = "Agustus"
+          break;
+        case 8:
+          month = "September"
+          break;
+        case 9:
+          month = "Oktober"
+          break;
+        case 10:
+          month = "November"
+          break;
+        case 11:
+          month = "Desember"
+          break;
+      }
+      return month;
+    }
+  </script>
+</body>
+<%- include('../partials/footer'); %>
